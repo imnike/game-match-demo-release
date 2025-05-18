@@ -84,7 +84,10 @@ Player* PlayerManager::playerLogin(uint64_t id)
     }
     //std::cout << "Player " << id << " login." << std::endl;
     _setPlayerOnlineNoLock(id, true);
-    pPlayer->setStatus(common::PlayerStatus::lobby);
+    if (pPlayer->getStatus() == common::PlayerStatus::offline)
+    {
+        pPlayer->setStatus(common::PlayerStatus::lobby);
+    }
     return pPlayer;
 }
 
@@ -112,6 +115,18 @@ bool PlayerManager::isPlayerOnline(uint64_t id)
     std::lock_guard<std::mutex> lock(m_mapPlayersMutex);
 
     return (m_setOnlinePlayerIds.find(id) != m_setOnlinePlayerIds.end());
+}
+
+Player* PlayerManager::getPlayer(uint64_t id)
+{
+	std::lock_guard<std::mutex> lock(m_mapPlayersMutex);
+	Player* pPlayer = _getPlayerNoLock(id);
+    if (!pPlayer)
+    {
+		std::cout << "Player " << id << " not found." << std::endl;
+		return nullptr;
+    }
+	return pPlayer;
 }
 
 std::vector<Player*> PlayerManager::getOnlinePlayers() 

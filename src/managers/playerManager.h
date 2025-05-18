@@ -18,6 +18,7 @@ public:
     Player* playerLogin(uint64_t id);
     bool playerLogout(uint64_t id);
     bool isPlayerOnline(uint64_t id);
+    Player* getPlayer(uint64_t id);
     std::vector<Player*> getOnlinePlayers();
 	std::unordered_map<uint64_t, std::unique_ptr<Player>>* getAllPlayers() { return &m_mapPlayers; }
     std::set<uint64_t>* getOnlinePlayerIds() { return &m_setOnlinePlayerIds; }

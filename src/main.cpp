@@ -22,8 +22,11 @@
 std::atomic<bool> isRunning = true; // 控制命令處理執行緒的運行狀態
 
 void commandThread();
+void showPlayer(Player* pPlayer, bool isList);
 void listAllPlayers();
-void simulatePlayers(uint32_t counts);
+void listSpecPlayers(std::set<uint64_t> setPlayerIds);
+void simulatePlayer(uint64_t playerId);
+void simulateBatch(uint32_t counts);
 void exitGame();
 
 int main()
@@ -90,8 +93,35 @@ int main()
     return 0;
 }
 
+void simulatePlayer(uint64_t playerId)
+{
+	// 指定id的玩家登入並匹配
+    Player* pPlayer = nullptr;
+    pPlayer = PlayerManager::instance().playerLogin(playerId);
+    if (pPlayer == nullptr)
+    {
+        std::cout << " player " << playerId << " not exists.\n";
+        return;
+    }
+    std::cout << "--- Starting player " << playerId << " to simulation match --- \n";
+    if (pPlayer->isInLobby())
+    {
+        playerId = pPlayer->getId(); // 假設 playerLogin 會返回有效的玩家 ID
+        // 將玩家加入匹配隊列
+        BattleManager::instance().addPlayerToQueue(pPlayer);
+        std::cout << " player " << playerId << " join matchQueue.\n";
+    }
+    else
+    {
+        std::cout << " player " << playerId << " is not in lobby.\n";
+    }
+    //std::cout << "Waiting 1 seconds for players to potentially match...\n";
+    // 等待一段時間，讓玩家有機會匹配和戰鬥
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
 // 模擬玩家登入並匹配
-void simulatePlayers(uint32_t counts)
+void simulateBatch(uint32_t counts)
 {
     std::cout << "--- Starting player simulation batch ---\n";
 
@@ -100,13 +130,21 @@ void simulatePlayers(uint32_t counts)
     // 獲取所有玩家ob
     auto pMapAllPlayers = PlayerManager::instance().getAllPlayers();
 
+    std::set<uint64_t> tmpSetGotIds{}; // 用於存儲已抓取的玩家ID，避免重複使用
+
     // 實作隨機取得一個不在線的玩家id
     uint64_t maxId = static_cast<uint64_t>(pMapAllPlayers->size());
     for (uint32_t i = 0; i < counts; i++)
     {
         // 取得一個隨機(1~maxID)
-        uint64_t playerId = random_utils::getRandom(maxId);
         Player* pPlayer = nullptr;
+        uint64_t playerId = random_utils::getRandom(maxId);
+		auto itGot = tmpSetGotIds.find(playerId); // 檢查是否已經抓取過這個ID
+        if (itGot != tmpSetGotIds.end())
+        {
+			// 如果已經抓取過, 用0會創建一個新帳號
+            playerId = 0;
+        }
         pPlayer = PlayerManager::instance().playerLogin(playerId);
         if (pPlayer)
         {
@@ -116,6 +154,7 @@ void simulatePlayers(uint32_t counts)
                 vecLoggedInIds.emplace_back(playerId);
                 // 將玩家加入匹配隊列
                 BattleManager::instance().addPlayerToQueue(pPlayer);
+				tmpSetGotIds.emplace(playerId); // 將玩家ID加入已抓取的集合
                 std::cout << " player " << playerId << " join matchQueue.\n";
             }
             else
@@ -129,9 +168,9 @@ void simulatePlayers(uint32_t counts)
         }
     }
 
-    //std::cout << "Waiting 3 seconds for players to potentially match...\n";
+    //std::cout << "Waiting 1 seconds for players to potentially match...\n";
     // 等待一段時間，讓玩家有機會匹配和戰鬥
-    //std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // // 如果需要，可以使這些玩家登出
     // for (uint64_t id : vecLoggedInIds)
@@ -151,7 +190,7 @@ void simulatePlayers(uint32_t counts)
 // 命令處理執行緒的函式
 void commandThread()
 {
-    std::cout << "\nCommand thread started. Available commands: <help>, <list>, <query ID>, <start [count]>, <exit>\n";
+    std::cout << "\nCommand thread started. \nPlease type 'help' to see available commands.\n";
 
     std::string line_input; // 用於讀取整行輸入
     while (isRunning)
@@ -184,12 +223,13 @@ void commandThread()
         if (command_name == "help")
         {
             std::cout << "--- Available Commands ---\n";
-            std::cout << "  <help>           : Display this help message.\n";
-            std::cout << "  <list>           : List all players with their current status, score, tier, wins, and last update time.\n";
-            std::cout << "  <queue>          : Display the current status of the team matchmaking queue and battle matchmaking queue.\n";
-            std::cout << "  <query ID>       : Query battle statistics for a specific player by their ID.\n";
-            std::cout << "  <start [count]>  : Simulate player logins and add them to the matchmaking queue. 'count' is optional (default: 1).\n";
-            std::cout << "  <exit>           : Shut down the game demo.\n";
+            std::cout << "  help           : Display this help message.\n";
+            std::cout << "  list           : List all players with their current status, score, tier, wins, and last update time.\n";
+            std::cout << "  queue          : Display the current status of the team matchmaking queue and battle matchmaking queue.\n";
+            std::cout << "  show <id>      : Show statistics for a specific player by their ID.\n";
+            std::cout << "  batch <count>  : Simulate player logins and add them to the matchmaking queue. 'count' is optional (default: 1).\n";
+			std::cout << "  join <id1>[,<id2>,...] : Simulate specific player(s) by ID joining the matchmaking queue. Use '0' for a new player.\n";
+            std::cout << "  exit           : Shut down the game demo.\n";
             std::cout << "--------------------------\n";
         }
         else if (command_name == "list")
@@ -269,6 +309,62 @@ void commandThread()
                 std::cout << "  (Battle Match Queue no teams)\n";
             }
         }
+        else if (command_name == "show")
+        {
+            std::string arg;
+            if (!(iss >> arg))
+            {
+                std::cout << "Usage: show <id> [,<id>,...]\n"; // Updated usage message
+                continue;
+            }
+
+            // Check if the argument contains commas, indicating multiple IDs
+            size_t first_comma = arg.find(',');
+            if (first_comma == std::string::npos) // Single ID provided
+            {
+                try {
+                    uint64_t playerId = std::stoull(arg);
+                    Player* pPlayer = PlayerManager::instance().getPlayer(playerId);
+                    if (pPlayer)
+                    {
+                        showPlayer(pPlayer, false); // Display player information
+                    }
+                    else
+                    {
+                        std::cout << "Player ID " << arg << " not found.\n";
+                    }
+                }
+                catch (const std::invalid_argument&) {
+                    std::cout << "Invalid player ID format: '" << arg << "'. Please enter a valid number.\n";
+                }
+                catch (const std::out_of_range&) {
+                    std::cout << "Player ID '" << arg << "' is out of range.\n";
+                }
+            }
+            else // Multiple IDs provided (e.g., "1,2,3,6")
+            {
+                std::stringstream ss_arg(arg);
+                std::string segment;
+                std::set<uint64_t> tmpSetPlayerIds{}; // 用於存儲玩家ID
+                while (std::getline(ss_arg, segment, ','))
+                {
+                    if (segment.empty()) continue; // Skip empty segments in case of consecutive commas
+
+                    try {
+                        uint64_t playerId = std::stoull(segment);
+						tmpSetPlayerIds.insert(playerId); // 將玩家ID加入集合
+                    }
+                    catch (const std::invalid_argument&) {
+                        std::cout << "Invalid player ID format in list: '" << segment << "'. Please enter a valid number.\n";
+                    }
+                    catch (const std::out_of_range&) {
+                        std::cout << "Player ID '" << segment << "' is out of range.\n";
+                    }
+                }
+				listSpecPlayers(tmpSetPlayerIds); // 列出所有玩家資訊
+            }
+        }
+        /*
         else if (command_name == "query")
         {
             std::string arg;
@@ -307,8 +403,58 @@ void commandThread()
             catch (const std::out_of_range&) {
                 std::cout << "Player ID '" << arg << "' is out of range.\n";
             }
+        }*/
+        else if (command_name == "join")
+        {
+            std::string arg_string;
+            if (!(iss >> arg_string))
+            {
+                std::cout << "Usage: join <id1>[,<id2>,...]\n";
+                continue;
+            }
+            std::getline(iss, arg_string);
+
+            // ！！！修正：首先移除前後空白，然後檢查是否為空 ！！！
+            // 移除前導和後續空白
+            size_t first_char = arg_string.find_first_not_of(" \t");
+            if (std::string::npos == first_char) { // 字串只包含空白或為空
+                arg_string.clear(); // 設為空字串
+            }
+            else {
+                size_t last_char = arg_string.find_last_not_of(" \t");
+                arg_string = arg_string.substr(first_char, (last_char - first_char + 1));
+            }
+
+            // 現在檢查是否提供了參數（處理完空白後）
+            if (arg_string.empty())
+            {
+                std::cout << "Usage: join <id1>[,<id2>,...]\n";
+				continue;
+            }
+
+            // 將逗號替換為空格，以便 std::stringstream 可以解析每個 ID
+            // 注意：這裡應該在確認 arg_string 不為空之後再執行
+            std::replace(arg_string.begin(), arg_string.end(), ',', ' ');
+
+            std::stringstream id_stream(arg_string);
+            std::string single_id_str;
+
+            // 迴圈讀取每個 ID
+            while (id_stream >> single_id_str) {
+                try {
+                    uint64_t playerId = std::stoull(single_id_str);
+                    // 這裡呼叫你的 simulatePlayer 函式來處理每個 ID
+                    simulatePlayer(playerId);
+                }
+                catch (const std::invalid_argument&) {
+                    std::cout << "Invalid player ID format: '" << single_id_str << "'. Please enter a valid number.\n";
+                }
+                catch (const std::out_of_range&) {
+                    std::cout << "Player ID '" << single_id_str << "' is out of range.\n";
+                }
+            }
         }
-        else if (command_name == "start")
+        else if (command_name == "batch")
         {
             int count = 1;
             std::string arg;
@@ -316,10 +462,16 @@ void commandThread()
             {
                 try {
                     count = std::stoi(arg);
-                    if (count <= 0) {
+                    if (count <= 0)
+                    {
                         std::cout << "Count must be a positive number.\n";
                         continue;
                     }
+                    else if (count > 100)
+                    {
+						std::cout << "Please enter a number between 1 and 100.\n";
+                        continue;
+					}
                 }
                 catch (const std::invalid_argument&) {
                     std::cout << "Invalid count format: '" << arg << "'. Using default (1).\n";
@@ -330,7 +482,7 @@ void commandThread()
                     count = 1;
                 }
             }
-            simulatePlayers(count);
+            simulateBatch(count);
         }
         else if (command_name == "exit")
         {
@@ -338,7 +490,7 @@ void commandThread()
         }
         else
         {
-            std::cout << "Unknown command '" << line_input << "'. Available commands: <list [ID|all]>, <query ID>, <start [count]>, <exit>\n";
+            std::cout << "Unknown command '" << line_input << "'. Please type 'help' to see available commands.\n";
         }
     }
 
@@ -350,7 +502,7 @@ static const std::string getStatusToString(common::PlayerStatus status)
     switch (status) 
     {
     case common::PlayerStatus::offline:
-        return "";
+        return "offline";
         break;
     case common::PlayerStatus::lobby:
         return "Lobby";
@@ -367,6 +519,65 @@ static const std::string getStatusToString(common::PlayerStatus status)
     return "unknown";
 }
 
+void showPlayer(Player* pPlayer, bool isList)
+{
+    if (!pPlayer)
+    {
+        std::cout << "Usage: show <id>\n";
+		return;
+    }
+
+    if (isList == false)
+    {
+        std::cout << "\n----- PLAYERS LIST -----\n";
+        std::cout << std::left << std::setw(10) << "ID"
+            << std::setw(10) << "Score"
+            << std::setw(10) << "Tier"
+            << std::setw(10) << "Wins"
+            << std::setw(15) << "Status" << "\n";
+//            << std::setw(25) << "Updated Time" << "\n";
+        std::cout << "---------------------------------------------------\n";
+    }
+    std::cout << std::left << std::setw(10) << pPlayer->getId()
+        << std::setw(10) << pPlayer->getScore()
+        << std::setw(10) << pPlayer->getTier()
+        << std::setw(10) << pPlayer->getWins()
+        << std::setw(15) << getStatusToString(pPlayer->getStatus()) << "\n";
+//        << std::setw(25) << time_utils::formatTimestampMs(pPlayer->getUpdatedTime()) << "\n";
+    if (isList == false)
+    {
+        std::cout << "---------------------------------------------------\n";
+    }
+}
+
+void listSpecPlayers(std::set<uint64_t> setPlayerIds)
+{
+    if (setPlayerIds.empty())
+    {
+        std::cout << "No players currently.\n";
+		return;
+    }
+    std::cout << "\n----- PLAYERS LIST -----\n";
+    std::cout << std::left << std::setw(10) << "ID"
+        << std::setw(10) << "Score"
+        << std::setw(10) << "Tier"
+        << std::setw(10) << "Wins"
+        << std::setw(15) << "Status" << "\n";
+ //       << std::setw(25) << "Updated Time" << "\n";
+    std::cout << "---------------------------------------------------\n";
+
+    for (const auto& itPlayerId : setPlayerIds)
+    {
+        Player* pPlayer = PlayerManager::instance().getPlayer(itPlayerId);
+        if (pPlayer)
+        {
+            showPlayer(pPlayer, true); // 使用 get() 取得原始指標
+        }
+    }
+
+    std::cout << "---------------------------------------------------\n";
+}
+
 // 列出所有玩家資訊
 void listAllPlayers()
 {
@@ -376,31 +587,21 @@ void listAllPlayers()
         std::cout << "No players currently.\n";
         return;
     }
-
     std::cout << "\n----- PLAYERS LIST -----\n";
     std::cout << std::left << std::setw(10) << "ID"
         << std::setw(10) << "Score"
         << std::setw(10) << "Tier"
         << std::setw(10) << "Wins"
-        << std::setw(15) << "Status" 
-        << std::setw(25) << "Updated Time" << "\n"; 
-    std::cout << "------------------------------------------------------------------------------\n";
+        << std::setw(15) << "Status" << "\n";
+//        << std::setw(25) << "Updated Time" << "\n";
+    std::cout << "---------------------------------------------------\n";
 
     for (const auto& itPlayer : *pMapPlayers)
     {
-        Player* pPlayer = itPlayer.second.get();
-        if (pPlayer)
-        {
-            std::cout << std::left << std::setw(10) << pPlayer->getId()
-                << std::setw(10) << pPlayer->getScore()
-                << std::setw(10) << pPlayer->getTier()
-                << std::setw(10) << pPlayer->getWins()
-                << std::setw(15) << getStatusToString(pPlayer->getStatus())
-                << std::setw(25) << time_utils::formatTimestampMs(pPlayer->getUpdatedTime()) << "\n";
-        }
+        showPlayer(itPlayer.second.get(), true); // 使用 get() 取得原始指標
     }
 
-    std::cout << "------------------------------------------------------------------------------\n";
+    std::cout << "---------------------------------------------------\n";
 }
 
 // 退出遊戲，執行清理操作
