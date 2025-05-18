@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="來源檔案">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="標頭檔">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="資源檔">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{a403bccd-3e0d-4caf-8d26-bffd3a8b29ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4763dbbc-b4d4-4c47-80ff-9ebc56d33ccd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{e3882a7a-a985-49ff-9495-f35e1e409be8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\objects">
+      <UniqueIdentifier>{3c7f949d-d8a3-49af-b6e7-92b70b21bafe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\managers">
+      <UniqueIdentifier>{3686e4c1-18b9-4c8b-8159-a149b03fe9df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs">
+      <UniqueIdentifier>{92052095-2559-47d5-a7ac-611de6688b0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\sqlite">
+      <UniqueIdentifier>{36bc2bdc-433e-4710-b89a-deeb44e948e3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="utils\utils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\globalDefine.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\objects\player.h">
+      <Filter>src\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\objects\hero.h">
+      <Filter>src\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\managers\battleManager.h">
+      <Filter>src\managers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\managers\dbManager.h">
+      <Filter>src\managers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\managers\playerManager.h">
+      <Filter>src\managers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\managers\scheduleManager.h">
+      <Filter>src\managers</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\sqlite\sqlite3.h">
+      <Filter>libs\sqlite</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="utils\utils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\objects\player.cpp">
+      <Filter>src\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\objects\hero.cpp">
+      <Filter>src\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\managers\battleManager.cpp">
+      <Filter>src\managers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\managers\dbManager.cpp">
+      <Filter>src\managers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\managers\playerManager.cpp">
+      <Filter>src\managers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\managers\scheduleManager.cpp">
+      <Filter>src\managers</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\sqlite\sqlite3.c">
+      <Filter>libs\sqlite</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
