@@ -17,7 +17,12 @@ Player::~Player()
 
 uint32_t Player::getTier() const
 {
-    return (m_score / 200) + 1; // hidden tier
+    const uint32_t tier =  (m_score / battle::TIER_SCORE_INTERVAL) + battle::Tier::TierMin; // hidden tier
+    if (tier > battle::Tier::TierMax)
+    {
+        return battle::Tier::TierMax;
+    }
+    return tier;
 }
 
 void Player::addScore(uint32_t scoreDelta)

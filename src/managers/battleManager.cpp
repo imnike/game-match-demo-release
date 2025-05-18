@@ -308,14 +308,16 @@ void BattleManager::addPlayerToQueue(Player* pPlayer)
 
 void BattleManager::handlePlayerWin(uint64_t playerId)
 {
-    std::cout << "Player " << playerId << " WIN!!! (+ " << battle::WINNER_SCORE << " points)" << std::endl;
-    PlayerManager::instance().handlePlayerBattleResult(playerId, battle::WINNER_SCORE, true);
+	const uint32_t winnerScore = battle::WINNER_SCORE + random_utils::getRandom(battle::WINNER_SCORE);
+    std::cout << "Player " << playerId << " WIN!!! (+ " << winnerScore << " points)" << std::endl;
+    PlayerManager::instance().handlePlayerBattleResult(playerId, winnerScore, true);
 }
 
 void BattleManager::handlePlayerLose(uint64_t playerId)
 {
-    std::cout << "Player " << playerId << " LOSE... (" << battle::LOSER_SCORE << " points)" << std::endl;
-    PlayerManager::instance().handlePlayerBattleResult(playerId, battle::LOSER_SCORE, false);
+	const uint32_t loserScore = battle::LOSER_SCORE + random_utils::getRandom(battle::LOSER_SCORE/2);
+    std::cout << "Player " << playerId << " LOSE... (" << loserScore << " points)" << std::endl;
+    PlayerManager::instance().handlePlayerBattleResult(playerId, loserScore, false);
 }
 
 // get next room id in atomic way

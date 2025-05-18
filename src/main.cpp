@@ -23,6 +23,7 @@ std::atomic<bool> isRunning = true; // 控制命令處理執行緒的運行狀態
 
 void commandThread();
 void showPlayer(Player* pPlayer, bool isList);
+void showTopPlayers(size_t count);
 void listAllPlayers();
 void listSpecPlayers(std::set<uint64_t> setPlayerIds);
 void simulatePlayer(uint64_t playerId);
@@ -224,11 +225,12 @@ void commandThread()
         {
             std::cout << "--- Available Commands ---\n";
             std::cout << "  help           : Display this help message.\n";
-            std::cout << "  list           : List all players with their current status, score, tier, wins, and last update time.\n";
-            std::cout << "  queue          : Display the current status of the team matchmaking queue and battle matchmaking queue.\n";
-            std::cout << "  show <id>      : Show statistics for a specific player by their ID.\n";
             std::cout << "  batch <count>  : Simulate player logins and add them to the matchmaking queue. 'count' is optional (default: 1).\n";
-			std::cout << "  join <id1>[,<id2>,...] : Simulate specific player(s) by ID joining the matchmaking queue. Use '0' for a new player.\n";
+			std::cout << "  join <id1>[,<id2>,...] : Simulate specific player(s) by ID(s) joining the matchmaking queue. Use '0' for a new player.\n";
+            std::cout << "  queue          : Display the current status of the team matchmaking queue and battle matchmaking queue.\n";
+            std::cout << "  top <count>    : Display top players sorted list. 'count' is optional (default: 10).\n";
+            std::cout << "  list           : Display all players.\n";
+            std::cout << "  show <id1>[,<id2>,...] : Display specific player(s) by their ID(s).\n";
             std::cout << "  exit           : Shut down the game demo.\n";
             std::cout << "--------------------------\n";
         }
@@ -484,6 +486,30 @@ void commandThread()
             }
             simulateBatch(count);
         }
+        else if (command_name == "top") // 新增 top 指令處理
+        {
+            int count = 10; // 預設顯示前 10 名
+            std::string arg;
+            if (iss >> arg)
+            {
+                try {
+                    count = std::stoi(arg);
+                    if (count <= 0) {
+                        std::cout << "Count must be a positive number.\n";
+                        continue;
+                    }
+                }
+                catch (const std::invalid_argument&) {
+                    std::cout << "Invalid count format: '" << arg << "'. Using default (10).\n";
+                    count = 10;
+                }
+                catch (const std::out_of_range&) {
+                    std::cout << "Count '" << arg << "' is out of range. Using default (10).\n";
+                    count = 10;
+                }
+            }
+            showTopPlayers(count); // 呼叫新的函數
+        }
         else if (command_name == "exit")
         {
             exitGame();
@@ -599,6 +625,78 @@ void listAllPlayers()
     for (const auto& itPlayer : *pMapPlayers)
     {
         showPlayer(itPlayer.second.get(), true); // 使用 get() 取得原始指標
+    }
+
+    std::cout << "---------------------------------------------------\n";
+}
+// 新增：顯示前 N 名玩家的函數
+void showTopPlayers(size_t count)
+{
+    auto pMapPlayers = PlayerManager::instance().getAllPlayers();
+    if (pMapPlayers->empty())
+    {
+        std::cout << "No players currently.\n";
+        return;
+    }
+	const size_t maxSize = pMapPlayers->size();
+    if (count > maxSize)
+    {
+		std::cout << "Count " << count << " > " << maxSize << " Showing all players.\n";
+		count = maxSize; // 限制 count 不超過玩家數量
+    }
+
+    // 將所有玩家的裸指針放入一個 vector
+    std::vector<Player*> tmpVecPlayers;
+    for (const auto& pair : *pMapPlayers)
+    {
+        tmpVecPlayers.push_back(pair.second.get());
+    }
+
+    // 進行排序
+    // 排序規則：
+    // 1. 按 Score 降序 (高的優先)
+    // 2. 如果 Score 相同，按 Wins 降序 (高的優先)
+    // 3. 如果 Score 和 Wins 都相同，按 ID 升序 (小的優先，確保穩定性)
+    std::sort(tmpVecPlayers.begin(), tmpVecPlayers.end(), [](const Player* a, const Player* b) {
+        if (a->getScore() != b->getScore()) //
+        {
+            return a->getScore() > b->getScore(); // 分數高的優先
+        }
+        if (a->getWins() != b->getWins()) //
+        {
+            return a->getWins() > b->getWins(); // 勝場高的優先
+        }
+        return a->getId() < b->getId(); // ID 小的優先 (升序)
+        });
+
+    // 顯示前 count 名玩家
+    std::cout << "\n----- TOP " << count << " PLAYERS -----\n";
+    std::cout << std::left << std::setw(5) << "Rank"
+        << std::setw(10) << "ID"
+        << std::setw(10) << "Score"
+        << std::setw(10) << "Tier"
+        << std::setw(10) << "Wins"
+        << std::setw(15) << "Status" << "\n";
+        //        << std::setw(25) << "Updated Time" << "\n";
+    std::cout << "---------------------------------------------------\n";
+
+    uint32_t currentRank = 1;
+    for (const auto& pPlayer : tmpVecPlayers)
+    {
+        if (currentRank > count) // 只顯示前 count 名
+        {
+            break;
+        }
+        if (pPlayer)
+        {
+            std::cout << std::left << std::setw(5) << currentRank++
+                << std::setw(10) << pPlayer->getId()
+                << std::setw(10) << pPlayer->getScore()
+                << std::setw(10) << pPlayer->getTier()
+                << std::setw(10) << pPlayer->getWins()
+                << std::setw(15) << getStatusToString(pPlayer->getStatus()) << "\n";
+//                << std::setw(25) << time_utils::formatTimestampMs(pPlayer->getUpdatedTime()) << "\n";
+        }
     }
 
     std::cout << "---------------------------------------------------\n";
