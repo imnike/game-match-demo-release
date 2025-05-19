@@ -20,8 +20,8 @@ namespace battle
     const uint32_t TIER_MIN = 1;
     const uint32_t TIER_MAX = 10;
     const uint32_t TIER_SCORE_INTERVAL = 200;
-    const uint32_t WINNER_SCORE = 50;
-    const uint32_t LOSER_SCORE = 50;
+    const uint32_t WINNER_ADD_SCORE_BASE = 50;
+    const uint32_t LOSER_SUB_SCORE_BASE = 50;
 
     enum Tier : uint32_t
     {

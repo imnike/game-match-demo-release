@@ -308,14 +308,14 @@ void BattleManager::addPlayerToQueue(Player* pPlayer)
 
 void BattleManager::handlePlayerWin(uint64_t playerId)
 {
-	const uint32_t winnerScore = battle::WINNER_SCORE + random_utils::getRandom(battle::WINNER_SCORE);
+	const uint32_t winnerScore = battle::WINNER_ADD_SCORE_BASE + random_utils::getRandom(battle::WINNER_ADD_SCORE_BASE);
     std::cout << "Player " << playerId << " WIN!!! (+ " << winnerScore << " points)" << std::endl;
     PlayerManager::instance().handlePlayerBattleResult(playerId, winnerScore, true);
 }
 
 void BattleManager::handlePlayerLose(uint64_t playerId)
 {
-	const uint32_t loserScore = battle::LOSER_SCORE + random_utils::getRandom(battle::LOSER_SCORE/2);
+	const uint32_t loserScore = battle::LOSER_SUB_SCORE_BASE + random_utils::getRandom(battle::LOSER_SUB_SCORE_BASE/2);
     std::cout << "Player " << playerId << " LOSE... (" << loserScore << " points)" << std::endl;
     PlayerManager::instance().handlePlayerBattleResult(playerId, loserScore, false);
 }
