@@ -361,12 +361,6 @@ void BattleManager::matchmakingThread()
 
                 if (vecNewTeam.size() == battle::TeamMembers::TeamMemberMax)
                 {
-                    for (Player* pPlayer : vecNewTeam) 
-                    {
-                        std::cout << pPlayer->getId() << " ";
-                    }
-                    std::cout << std::endl;
-
                     m_battleMatchQueue.addTeam(vecNewTeam);
                 }
                 else 
