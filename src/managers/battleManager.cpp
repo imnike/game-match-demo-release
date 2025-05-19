@@ -316,7 +316,7 @@ void BattleManager::handlePlayerWin(uint64_t playerId)
 void BattleManager::handlePlayerLose(uint64_t playerId)
 {
 	const uint32_t loserScore = battle::LOSER_SUB_SCORE_BASE + random_utils::getRandom(battle::LOSER_SUB_SCORE_BASE/2);
-    std::cout << "Player " << playerId << " LOSE... (" << loserScore << " points)" << std::endl;
+    std::cout << "Player " << playerId << " LOSE... (-" << loserScore << " points)" << std::endl;
     PlayerManager::instance().handlePlayerBattleResult(playerId, loserScore, false);
 }
 
