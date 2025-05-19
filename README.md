@@ -94,24 +94,24 @@ If the build fails with **MSB8020 (Missing v143 Build Tools)**:
 ---
 ## Core Features
 
-### Player Manager (PlayerManager)
+### Player Management (PlayerManager)
 * Player login/logout mechanisms.
 * Manages player online status and in-game states (offline/matching/in-battle/lobby).
 * Processes player battle results and updates scores and wins.
 * **Asynchronous Write-back:** When player data changes, it's added to a schedule for periodic write-back to the database.
 
-### Battle Match Manager (BattleManager)
+### Battle & Match Management (BattleManager)
 * Tier-based matching according to player rank. Includes an automatic team formation mechanism (3v3).
 * Creates independent battle rooms (BattleRoom) and battle units (Hero).
 * Each room runs a simple simulated battle and result determination on its own thread.
 * Battle outcomes (win/loss) are synchronized after the battle concludes.
 
-### Database Manager (DbManager)
+### Database Management (DbManager)
 * Implements data persistent storage based on the lightweight SQLite database.
 * Provides interfaces for Create, Read, Update, and Delete (CRUD) operations on player battle data.
 * Ensures database table structures exist upon initialization and loads data into the game.
 
-### Schedule Task Manager (ScheduleManager)
+### Schedule Task Management (ScheduleManager)
 * A general-purpose, multi-thread safe task scheduler.
 * Supports both periodic tasks (e.g., player data write-back) and one-time tasks.
 ---
