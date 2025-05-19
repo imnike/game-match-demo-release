@@ -68,54 +68,27 @@ This project serves as a demo of my personal programming capabilities and unders
 ├── README.md
 └── README.zh-TW.md
 ```
+## TODO List
 
-## Areas for Optimization
+This project serves as a **proof-of-concept** for a **multithreaded server application**, demonstrating **core functionalities** such as **player management, battle matchmaking, and data persistence**.  
+Due to time constraints in development, many **advanced features and best practices** have yet to be fully integrated.  
 
-This project serves as a conceptual demo, aiming to quickly set up a multi-threaded server application and showcase basic player management, battle matching, and data persistence.
-During development, I constantly became aware of many potential areas for optimization or necessary improvements. However, due to time constraints in creating this demo, many advanced features could not be fully implemented.
-Therefore, I've outlined a review of the currently known design and implementation shortcomings, along with concrete optimization directions and practical recommendations below:
+  * **Graceful Shutdown**
 
----
+    - Implement a global server state manager to coordinate the shutdown sequence, ensuring smooth termination and data persistence.</details>
 
-### 1. Graceful Shutdown Mechanism
+  * **Matchmaking**
 
-* **Current Status:** The current shutdown functionality merely terminates the main control via an `exit` command in `main.cpp` and calls each Manager's `release()` method to cease operations.
-* **Problem:** Without a robust **graceful shutdown** mechanism, we can't ensure all functionalities exit cleanly (e.g., player matching or database write-backs). This poses risks of **data loss** or **deadlocks**.
-* **Optimization:** Implement a **global, centralized server state management console**. Upon receiving a shutdown command, it will orchestrate the Managers to safely stop services by sequentially calling their dedicated `shutdown()` methods, ensuring data is fully persisted before final termination.
+    - Security : Ensure player state synchronization during matchmaking to maintain data consistency and prevent null pointer issues.
+    - Efficiency : Improve efficiency with an event-driven architecture, optimized ranking, and advanced team formation, aiming for O(log N) performance.
 
----
+  * **Database**
 
-### 2. Matching Mechanism Security
+    - Migrate data to MySQL or PostgreSQL, utilizing connection pooling and read/write optimization to handle high concurrency and large data access.</details>
 
-* **Current Status:** The current matchmaking is a simplistic list-based implementation driven by functional requirements, without comprehensive consideration of all scenarios.
-* **Problem:** There's a lack of robust mechanisms for **safe mid-match removal** of players, including active exits or timeout removals. This can lead to **state desynchronization** or **null pointer issues**.
-* **Optimization:** Implement a secure player exit mechanism that ensures **state synchronization** and maintains **queue integrity** during both player addition and removal.
+  * **Object Pool**
 
----
-
-### 3. Matching Mechanism Efficiency
-
-* **Current Status:** The current matchmaking mechanism relies on periodically checking a simple list, which is a functional implementation without full consideration for efficiency.
-* **Problem:** Being a plain list, it lacks **score-based sorting**, limiting its scalability and flexibility. Furthermore, both single-player and team-based matching stages involve **traversal (O(n))** for each match, leading to inefficiency and significant memory consumption.
-* **Optimization:** Consider an **event-driven** approach, incorporating a **score-based sorting algorithm** and enhanced **team-forming functionalities**. This should save memory and improve matching efficiency to **O(log N)** levels.
-
----
-
-### 4. Database Selection
-
-* **Current Status:** For rapid and easy setup, the project initially uses **SQLite** as its sole database, primarily responsible for storing player battle data.
-* **Problem:** SQLite is a lightweight database inherently less mature in terms of **throughput, scalability, and security**. It presents **concurrency bottlenecks** and risks of **data loss**, making it unsuitable for a live game environment.
-* **Optimization:** Migrate the data to more comprehensive database servers like **MySQL or PostgreSQL**. Concurrently, implement a **connection pool** and various **read/write optimization mechanisms** to ensure stability and performance under high concurrency.
-
----
-
-### 5. Object Pool Mechanism
-
-* **Current Status:** During matchmaking, the system frequently creates and destroys objects like `BattleRoom` and `Hero`. Although **smart pointers** are used to prevent memory leaks and null pointer issues, this only addresses the safety aspect.
-* **Problem:** This **frequent dynamic memory allocation and deallocation** significantly **increases CPU overhead**, slowing down application performance. Moreover, it substantially **raises the risk of memory fragmentation**, impacting long-term system stability.
-* **Optimization:** Introduce an **Object Pool mechanism** to manage these objects. This involves **pre-configuring** a set number of objects. When needed, objects are **borrowed** from the pool, and once their use is complete, they are **returned** to it. This approach avoids repetitive memory allocation and deallocation, thereby **reducing performance overhead**.
-
----
+    - Preallocate objects and reuse them to reduce dynamic memory operations, lowering CPU load and preventing memory fragmentation.</details>
 
 ## Author
 
