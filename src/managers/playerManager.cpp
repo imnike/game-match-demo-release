@@ -188,7 +188,7 @@ void PlayerManager::_syncPlayerNoLock(uint64_t id, uint32_t score, uint32_t wins
 void PlayerManager::handlePlayerBattleResult(uint64_t playerId, uint32_t scoreDelta, bool isWin)
 {
     {
-        std::lock_guard<std::mutex> lock(m_mapPlayersMutex); // 保護對 m_mapPlayers 的訪問
+        std::lock_guard<std::mutex> lock(m_mapPlayersMutex);
 
         Player* pPlayer = _getPlayerNoLock(playerId);
         if (!pPlayer)
