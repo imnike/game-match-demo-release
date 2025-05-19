@@ -12,27 +12,9 @@ bool ScheduleManager::initialize()
         []()
         {
             PlayerManager::instance().saveDirtyPlayers();
-            //std::cout << "[ScheduleManager] Player data save triggered.\n";
         },
         5
     );
-
-    //scheduleTask(
-    //    []()
-    //    {
-    //        std::cout << "[ScheduleManager] Game heartbeat triggered.\n";
-    //    },
-    //    10
-    //);
-
-    //scheduleTask(
-    //    []()
-    //    {
-    //        std::cout << "[ScheduleManager] One-time startup check completed!\n";
-    //    },
-    //    3,
-    //    false   // once
-    //);
 
 	// start the worker thread
     m_running = true;
@@ -51,7 +33,6 @@ void ScheduleManager::release()
         {
 			// wait for the worker thread to finish its work and exit
             m_workerThread.join();
-            //std::cout << "[ScheduleManager] Worker thread joined.\n";
         }
     }
 	// lock after thread finished
@@ -81,7 +62,6 @@ ScheduleManager::~ScheduleManager()
 // handler for the worker thread
 void ScheduleManager::workerLoop()
 {
-    //std::cout << "[ScheduleManager] Worker loop started.\n";
     while (m_running)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -117,5 +97,4 @@ void ScheduleManager::workerLoop()
         }
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));  // wait 1ms before checking again
     }
-    //std::cout << "[ScheduleManager Thread] Worker loop stopped.\n";
 }

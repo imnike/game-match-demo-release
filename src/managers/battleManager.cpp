@@ -361,7 +361,6 @@ void BattleManager::matchmakingThread()
 
                 if (vecNewTeam.size() == battle::TeamMembers::TeamMemberMax)
                 {
-                    //std::cout << "Formed a 3-player team for tier " << tier << ". Players: ";
                     for (Player* pPlayer : vecNewTeam) 
                     {
                         std::cout << pPlayer->getId() << " ";

@@ -69,7 +69,6 @@ Player* PlayerManager::playerLogin(uint64_t id)
                 << std::endl;
 			return nullptr;
         }
-        //std::cout << "New player created with ID: " << id << std::endl;
     }
 
     Player* pPlayer = _getPlayerNoLock(id);
@@ -82,7 +81,6 @@ Player* PlayerManager::playerLogin(uint64_t id)
             << std::endl;
         return nullptr;
     }
-    //std::cout << "Player " << id << " login." << std::endl;
     _setPlayerOnlineNoLock(id, true);
     if (pPlayer->getStatus() == common::PlayerStatus::offline)
     {
@@ -98,11 +96,9 @@ bool PlayerManager::playerLogout(uint64_t id)
     Player* pPlayer = _getPlayerNoLock(id);
     if (!pPlayer)
     {
-        // std::cout << "Player " << id << " is not logged in." << std::endl;
         return false;
     }
 
-    //std::cout << "Player " << id << " logout." << std::endl;
     _setPlayerOnlineNoLock(id, false);
     pPlayer->setStatus(common::PlayerStatus::offline);
 	// Save player data to database
